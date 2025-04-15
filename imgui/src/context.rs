@@ -75,7 +75,7 @@ fn clear_current_context() {
         sys::igSetCurrentContext(ptr::null_mut());
     }
 }
-fn no_current_context() -> bool {
+pub fn no_current_context() -> bool {
     let ctx = unsafe { sys::igGetCurrentContext() };
     ctx.is_null()
 }
@@ -254,6 +254,40 @@ impl Context {
     fn is_current_context(&self) -> bool {
         let ctx = unsafe { sys::igGetCurrentContext() };
         self.raw == ctx
+    }
+
+    pub fn set_current_context(
+        existing: *mut imgui_sys::ImGuiContext
+    ) -> Self {
+        let _guard = CTX_MUTEX.lock();
+        assert!(
+            no_current_context(),
+            "A new active context cannot be created, because another one already exists"
+        );
+        unsafe { sys::igSetCurrentContext(existing) };
+
+        Context {
+            raw: existing,
+            shared_font_atlas: None,
+            ini_filename: None,
+            log_filename: None,
+            platform_name: None,
+            renderer_name: None,
+            clipboard_ctx: Box::new(ClipboardContext::dummy().into()),
+            ui: Ui {
+                buffer: UnsafeCell::new(crate::string::UiBuffer::new(1024)),
+            },
+        }
+    }
+}
+
+impl crate::internal::RawWrapper for Context {
+    type Raw = imgui_sys::ImGuiContext;
+    unsafe fn raw(&self) -> &Self::Raw {
+        &*self.raw
+    }
+    unsafe fn raw_mut(&mut self) -> &mut Self::Raw {
+        &mut*self.raw
     }
 }
 

@@ -811,6 +811,7 @@ impl Ui {
             let label_start = handle.push(label);
 
             // we do this in two allocations
+            /* 
             let items_inner: Vec<usize> = items.iter().map(|&v| handle.push(v)).collect();
             let items_inner: Vec<*const _> = items_inner
                 .into_iter()
@@ -818,6 +819,14 @@ impl Ui {
                 .collect();
 
             let label_ptr = handle.buffer.as_ptr().add(label_start) as *const _;
+            */
+            let items_inner: Vec<usize> = items.iter().map(|&v| handle.push(v)).collect();
+            let items_inner: Vec<*const _> = items_inner
+                .into_iter()
+                .map(|v| handle.buf.as_ptr().add(v) as *const _)
+                .collect();
+
+            let label_ptr = handle.buf.as_ptr().add(label_start) as *const _;
 
             (label_ptr, items_inner)
         };

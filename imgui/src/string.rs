@@ -4,11 +4,17 @@ use std::ops::{Deref, Index, RangeFull};
 use std::os::raw::c_char;
 use std::str;
 use std::{fmt, ptr};
+use std::ptr::NonNull;
+use std::alloc::{GlobalAlloc, Layout, System};
 
 /// this is the unsafe cell upon which we build our abstraction.
+#[repr(C)]
 #[derive(Debug)]
 pub struct UiBuffer {
-    pub buffer: Vec<u8>,
+    pub buf: NonNull<u8>,
+    pub buf_len: usize,
+    pub buf_cap: usize,
+    // pub buffer: Vec<u8>,
     pub max_len: usize,
 }
 
@@ -16,7 +22,10 @@ impl UiBuffer {
     /// Creates a new max buffer with the given length.
     pub const fn new(max_len: usize) -> Self {
         Self {
-            buffer: Vec::new(),
+            // buffer: Vec::new(),
+            buf: NonNull::dangling(),
+            buf_len: 0,
+            buf_cap: 0, 
             max_len,
         }
     }
@@ -66,8 +75,14 @@ impl UiBuffer {
     /// Attempts to clear the buffer if it's over the maximum length allowed.
     /// This is to prevent us from making a giant vec over time.
     pub fn refresh_buffer(&mut self) {
+        /* 
         if self.buffer.len() > self.max_len {
             self.buffer.clear();
+        }
+        */
+        if self.buf_len > self.max_len {
+            // let buf_ptr= self.buf.as_ptr();
+            self.buf_len = 0;
         }
     }
 
@@ -77,17 +92,55 @@ impl UiBuffer {
     /// This can return a pointer to undefined data if given a `pos >= self.buffer.len()`.
     /// This is marked as unsafe to reflect that.
     pub unsafe fn offset(&self, pos: usize) -> *const core::ffi::c_char {
-        self.buffer.as_ptr().add(pos) as *const _
+        // self.buffer.as_ptr().add(pos) as *const _
+        self.buf.as_ptr().add(pos) as *const _
     }
 
     /// Pushes a new scratch sheet text and return the byte index where the sub-string
     /// starts.
     pub fn push(&mut self, txt: impl AsRef<str>) -> usize {
+        /* 
         let len = self.buffer.len();
         self.buffer.extend(txt.as_ref().as_bytes());
         self.buffer.push(b'\0');
 
         len
+        */
+        // println!("old buf: 0x{:x}, len: {}, cap: {}", self.buf.as_ptr() as usize, self.buf_len, self.buf_cap);
+        let len = self.buf_len;
+        let tgt_len = self.buf_len + txt.as_ref().len() + 1;
+        if tgt_len > self.buf_cap {
+            let dealloc_old = self.buf_cap > 0;
+            let new_cap = match self.buf_cap {
+                0 => 1 << (usize::BITS - tgt_len.leading_zeros() + 1),
+                v => v * 2
+            };
+
+            // make new allocation
+            let layout = unsafe { Layout::from_size_align_unchecked(self.buf_cap, align_of::<usize>()) };
+            let new_layout = unsafe { Layout::from_size_align_unchecked(new_cap, align_of::<usize>()) };
+            let new_ptr = unsafe { System.alloc(new_layout) };
+            unsafe { 
+                std::ptr::copy_nonoverlapping(self.buf.as_ptr(), new_ptr, self.buf_len);
+            }
+            if dealloc_old {
+                unsafe { System.dealloc(self.buf.as_ptr(), layout) }
+            }
+            self.buf = unsafe { NonNull::new_unchecked(new_ptr) };
+            self.buf_cap = new_cap;
+        }
+        // insert text + null terminator
+        unsafe { 
+            std::ptr::copy_nonoverlapping(
+                txt.as_ref().as_ptr(),
+                self.buf.as_ptr().add(self.buf_len), 
+                txt.as_ref().len()
+            );
+            *self.buf.as_ptr().add(self.buf_len + txt.as_ref().len()) = 0;
+        }
+        self.buf_len += txt.as_ref().len() + 1;
+        // println!("old buf: 0x{:x}, len: {}, cap: {}", self.buf.as_ptr() as usize, self.buf_len, self.buf_cap);
+       len 
     }
 }
 

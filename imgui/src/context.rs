@@ -279,6 +279,30 @@ impl Context {
             },
         }
     }
+
+    pub fn get_allocator_functions() -> (
+        sys::ImGuiMemAllocFunc, 
+        sys::ImGuiMemFreeFunc, 
+        *mut std::ffi::c_void
+    ) {
+        let mut alloc_fn = None;
+        let mut free_fn = None;
+        let mut user_data = std::ptr::null_mut();
+        unsafe { sys::igGetAllocatorFunctions(
+            &raw mut alloc_fn, 
+            &raw mut free_fn, 
+            &raw mut user_data
+        ) }
+        (alloc_fn, free_fn, user_data)
+    }
+
+    pub fn set_allocator_functions(
+        alloc: sys::ImGuiMemAllocFunc,
+        free: sys::ImGuiMemFreeFunc,
+        user_data: *mut std::ffi::c_void
+    ) {
+        unsafe { sys::igSetAllocatorFunctions(alloc, free, user_data) }
+    }
 }
 
 impl crate::internal::RawWrapper for Context {

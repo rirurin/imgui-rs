@@ -1,6 +1,10 @@
 //! Internal raw utilities (don't use unless you know what you're doing!)
 
-use std::{ffi::c_int, slice};
+use std::{
+    ffi::c_int,
+    ops::{ Index, IndexMut },
+    slice
+};
 
 /// A generic version of the raw imgui-sys ImVector struct types
 #[repr(C)]
@@ -31,6 +35,47 @@ impl<T> ImVector<T> {
             self.size = data.len() as i32;
             self.capacity = data.len() as i32;
             self.data = buffer_ptr;
+        }
+    }
+
+    pub fn len(&self) -> usize { self.size as usize }
+    pub fn capacity(&self) -> usize { self.capacity as usize }
+
+    pub fn get(&self, index: usize) -> Option<&T> {
+        if index < self.len() {
+            Some(unsafe { &*self.data.add(index) })
+        } else {
+            None
+        }
+        
+    }
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        if index < self.len() {
+            Some(unsafe { &mut *self.data.add(index) })
+        } else {
+            None
+        }
+    }
+
+}
+
+impl<T> Index<usize> for ImVector<T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        if index < self.len() {
+            unsafe { &*self.data.add(index) }
+        } else {
+            panic!("{} is out of bounds for ImVector of length {}", index, self.len())
+        }
+    }
+}
+
+impl<T> IndexMut<usize> for ImVector<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index < self.len() {
+            unsafe { &mut *self.data.add(index) }
+        } else {
+            panic!("{} is out of bounds for ImVector of length {}", index, self.len())
         }
     }
 }

@@ -75,15 +75,15 @@ pub struct PlatformIo {
     >,
 
     #[cfg(feature = "docking")]
-    pub(crate) renderer_create_window: Option<unsafe extern "C" fn(*mut Viewport)>,
+    pub renderer_create_window: Option<unsafe extern "C" fn(*mut Viewport)>,
     #[cfg(feature = "docking")]
-    pub(crate) renderer_destroy_window: Option<unsafe extern "C" fn(*mut Viewport)>,
+    pub renderer_destroy_window: Option<unsafe extern "C" fn(*mut Viewport)>,
     #[cfg(feature = "docking")]
-    pub(crate) renderer_set_window_size: Option<unsafe extern "C" fn(*mut Viewport, sys::ImVec2)>,
+    pub renderer_set_window_size: Option<unsafe extern "C" fn(*mut Viewport, sys::ImVec2)>,
     #[cfg(feature = "docking")]
-    pub(crate) renderer_render_window: Option<unsafe extern "C" fn(*mut Viewport, *mut c_void)>,
+    pub renderer_render_window: Option<unsafe extern "C" fn(*mut Viewport, *mut c_void)>,
     #[cfg(feature = "docking")]
-    pub(crate) renderer_swap_buffers: Option<unsafe extern "C" fn(*mut Viewport, *mut c_void)>,
+    pub renderer_swap_buffers: Option<unsafe extern "C" fn(*mut Viewport, *mut c_void)>,
 
     /// Holds information about the available monitors.
     /// Should be initialized and updated by the [`PlatformViewportBackend`](crate::PlatformViewportBackend).

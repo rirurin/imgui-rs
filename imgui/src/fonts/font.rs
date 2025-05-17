@@ -38,6 +38,15 @@ impl Font {
     pub fn id(&self) -> FontId {
         FontId(self as *const _)
     }
+
+    pub fn get_glyph(&self, glyph: char) -> &FontGlyph {
+        // Can do a straight conversion, imgui wide char is also u32
+        let glyph = glyph as sys::ImWchar;
+        match self.index_lookup.get(glyph as usize) {
+            Some(i) => &self.glyphs[*i as usize],
+            None => unsafe { &*self.fallback_glyph }  
+        }
+    }
 }
 
 #[test]

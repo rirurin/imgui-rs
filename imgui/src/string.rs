@@ -4,17 +4,19 @@ use std::ops::{Deref, Index, RangeFull};
 use std::os::raw::c_char;
 use std::str;
 use std::{fmt, ptr};
-use std::ptr::NonNull;
-use std::alloc::{GlobalAlloc, Layout, System};
+// use std::ptr::NonNull;
+// use std::alloc::{GlobalAlloc, Layout, System};
 
 /// this is the unsafe cell upon which we build our abstraction.
 #[repr(C)]
 #[derive(Debug)]
 pub struct UiBuffer {
+    /* 
     pub buf: NonNull<u8>,
     pub buf_len: usize,
     pub buf_cap: usize,
-    // pub buffer: Vec<u8>,
+    */
+    pub buffer: Vec<u8>,
     pub max_len: usize,
 }
 
@@ -22,10 +24,12 @@ impl UiBuffer {
     /// Creates a new max buffer with the given length.
     pub const fn new(max_len: usize) -> Self {
         Self {
-            // buffer: Vec::new(),
+            buffer: Vec::new(),
+            /* 
             buf: NonNull::dangling(),
             buf_len: 0,
             buf_cap: 0, 
+            */
             max_len,
         }
     }
@@ -75,15 +79,15 @@ impl UiBuffer {
     /// Attempts to clear the buffer if it's over the maximum length allowed.
     /// This is to prevent us from making a giant vec over time.
     pub fn refresh_buffer(&mut self) {
-        /* 
         if self.buffer.len() > self.max_len {
             self.buffer.clear();
         }
-        */
+        /* 
         if self.buf_len > self.max_len {
             // let buf_ptr= self.buf.as_ptr();
             self.buf_len = 0;
         }
+        */
     }
 
     /// Given a position, gives an offset from the start of the scatch buffer.
@@ -92,20 +96,19 @@ impl UiBuffer {
     /// This can return a pointer to undefined data if given a `pos >= self.buffer.len()`.
     /// This is marked as unsafe to reflect that.
     pub unsafe fn offset(&self, pos: usize) -> *const core::ffi::c_char {
-        // self.buffer.as_ptr().add(pos) as *const _
-        self.buf.as_ptr().add(pos) as *const _
+        self.buffer.as_ptr().add(pos) as *const _
+        // self.buf.as_ptr().add(pos) as *const _
     }
 
     /// Pushes a new scratch sheet text and return the byte index where the sub-string
     /// starts.
     pub fn push(&mut self, txt: impl AsRef<str>) -> usize {
-        /* 
         let len = self.buffer.len();
         self.buffer.extend(txt.as_ref().as_bytes());
         self.buffer.push(b'\0');
 
         len
-        */
+        /* 
         // println!("old buf: 0x{:x}, len: {}, cap: {}", self.buf.as_ptr() as usize, self.buf_len, self.buf_cap);
         let len = self.buf_len;
         let tgt_len = self.buf_len + txt.as_ref().len() + 1;
@@ -141,6 +144,7 @@ impl UiBuffer {
         self.buf_len += txt.as_ref().len() + 1;
         // println!("old buf: 0x{:x}, len: {}, cap: {}", self.buf.as_ptr() as usize, self.buf_len, self.buf_cap);
        len 
+        */
     }
 }
 

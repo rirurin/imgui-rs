@@ -349,10 +349,9 @@ pub struct Io {
     pub key_super: bool,
     key_mods: sys::ImGuiKeyChord,
 
-    // note: this *should* be `ImGuiKey_COUNT` but that appears to end up
-    // being a very different value -- I suspect there's some namespace collision
-    // going on here.
-    keys_data: [sys::ImGuiKeyData; sys::ImGuiKey_NamedKey_COUNT as usize],
+    // Note: This array's size will equal ImGuiKey_NamedKey_COUNT if the IMGUI_DISABLE_OBSOLETE_KEYIO
+    // definition is enabled. By default, this isn't enabled, so this array will include 512 legacy keys as well
+    keys_data: [sys::ImGuiKeyData; const { sys::ImGuiKey_NamedKey_COUNT + sys::ImGuiKey_NamedKey_BEGIN } as usize],
 
     pub want_capture_mouse_unless_popup_close: bool,
 
@@ -471,6 +470,11 @@ impl Io {
         unsafe {
             sys::ImGuiIO_AddKeyAnalogEvent(self.raw_mut(), key as u32, down, value);
         }
+    }
+
+    pub fn get_key_data(&self, key: Key) -> &sys::ImGuiKeyData {
+        // &self.keys_data[key as usize - sys::ImGuiKey_NamedKey_BEGIN as usize]
+        &self.keys_data[key as usize]
     }
 }
 

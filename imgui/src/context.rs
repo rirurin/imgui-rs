@@ -303,6 +303,14 @@ impl Context {
     ) {
         unsafe { sys::igSetAllocatorFunctions(alloc, free, user_data) }
     }
+
+    pub fn has_context() -> bool {
+        unsafe { sys::igGetCurrentContext() != std::ptr::null_mut() }
+    }
+
+    pub fn clear_context_raw() {
+        unsafe { sys::igSetCurrentContext(std::ptr::null_mut()); }
+    }
 }
 
 impl crate::internal::RawWrapper for Context {

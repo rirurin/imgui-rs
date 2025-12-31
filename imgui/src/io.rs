@@ -351,7 +351,7 @@ pub struct Io {
 
     // Note: This array's size will equal ImGuiKey_NamedKey_COUNT if the IMGUI_DISABLE_OBSOLETE_KEYIO
     // definition is enabled. By default, this isn't enabled, so this array will include 512 legacy keys as well
-    keys_data: [sys::ImGuiKeyData; const { sys::ImGuiKey_NamedKey_COUNT + sys::ImGuiKey_NamedKey_BEGIN } as usize],
+    keys_data: [sys::ImGuiKeyData; const { (sys::ImGuiKey_NamedKey_COUNT + sys::ImGuiKey_NamedKey_BEGIN) as usize } ],
 
     pub want_capture_mouse_unless_popup_close: bool,
 
@@ -476,6 +476,15 @@ impl Io {
         // &self.keys_data[key as usize - sys::ImGuiKey_NamedKey_BEGIN as usize]
         &self.keys_data[key as usize]
     }
+
+    pub fn get_key_analog_value(&self, key: Key) -> f32 {
+        let data = self.get_key_data(key);
+        match data.Down {
+            true => data.AnalogValue,
+            false => 0.
+        }
+    }
+
 }
 
 impl Index<MouseButton> for Io {

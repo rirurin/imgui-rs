@@ -25,8 +25,15 @@ bitflags! {
 }
 
 /// A font identifier
+#[repr(transparent)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct FontId(pub(crate) *const Font);
+
+impl Default for FontId {
+    fn default() -> Self {
+        Self(ptr::null())
+    }
+}
 
 /// A font atlas that builds a single texture
 #[repr(C)]
